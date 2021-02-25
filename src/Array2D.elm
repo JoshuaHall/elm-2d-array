@@ -2,7 +2,7 @@ module Array2D exposing
     ( Array2D
     , fromRows, fromRowMajor, filledWith
     , numRows, numColumns, numElements
-    , get, set
+    , get, set, update
     , toFlatArrayRowMajor
     )
 
@@ -26,7 +26,7 @@ module Array2D exposing
 
 # Array2D Access
 
-@docs get, set
+@docs get, set, update
 
 
 # Conversion
@@ -132,6 +132,21 @@ set row column value (InternalArray2D array) =
                     value
                     array.array
         }
+
+
+update : Int -> Int -> (a -> a) -> Array2D a -> Array2D a
+update row column updater (InternalArray2D array) =
+    let
+        maybeElement : Maybe a
+        maybeElement =
+            get row column (InternalArray2D array)
+    in
+    case maybeElement of
+        Just element ->
+            set row column (updater element) (InternalArray2D array)
+
+        Nothing ->
+            InternalArray2D array
 
 
 toFlatArrayRowMajor : Array2D a -> Array a
