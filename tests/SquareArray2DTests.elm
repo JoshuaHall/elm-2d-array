@@ -17,7 +17,7 @@ squareArray2dTests =
                         sampleSquare2dArray
                         (\mySquare2dArray ->
                             mySquare2dArray
-                                |> SquareArray2D.numElements
+                                |> SquareArray2D.length
                                 |> Expect.equal 9
                         )
             ]
@@ -52,15 +52,11 @@ squareArray2dTests =
                         |> Expect.all
                             [ \arr ->
                                 arr
-                                    |> SquareArray2D.numRows
+                                    |> SquareArray2D.sideLength
                                     |> Expect.equal 20
                             , \arr ->
                                 arr
-                                    |> SquareArray2D.numColumns
-                                    |> Expect.equal 20
-                            , \arr ->
-                                arr
-                                    |> SquareArray2D.numElements
+                                    |> SquareArray2D.length
                                     |> Expect.equal 400
                             , \arr ->
                                 arr

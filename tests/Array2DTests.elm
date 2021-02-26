@@ -17,7 +17,7 @@ array2dTests =
                         sample2dArray
                         (\my2dArray ->
                             my2dArray
-                                |> Array2D.numElements
+                                |> Array2D.length
                                 |> Expect.equal 12
                         )
             ]
@@ -58,15 +58,15 @@ array2dTests =
                         |> Expect.all
                             [ \arr ->
                                 arr
-                                    |> Array2D.numRows
+                                    |> Array2D.rows
                                     |> Expect.equal 3
                             , \arr ->
                                 arr
-                                    |> Array2D.numColumns
+                                    |> Array2D.columns
                                     |> Expect.equal 20
                             , \arr ->
                                 arr
-                                    |> Array2D.numElements
+                                    |> Array2D.length
                                     |> Expect.equal 60
                             , \arr ->
                                 arr

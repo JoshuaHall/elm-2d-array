@@ -1,7 +1,7 @@
 module Array2D exposing
     ( Array2D
     , fromRows, fromColumns, fromRowMajor, initialize, repeat
-    , numRows, numColumns, numElements, get
+    , rows, columns, length, get
     , set, update
     , map, indexedMap
     , toFlatArrayRowMajor
@@ -23,7 +23,7 @@ module Array2D exposing
 
 # Query
 
-@docs numRows, numColumns, numElements, get
+@docs rows, columns, length, get
 
 
 # Manipulation
@@ -59,8 +59,8 @@ import Random.Array as RandomArray
 type Array2D a
     = InternalArray2D
         { array : Array a
-        , rows : Int
-        , columns : Int
+        , numRows : Int
+        , numColumns : Int
         }
 
 
@@ -82,8 +82,8 @@ fromRows rowsArrays =
     if ArrayHelpers.arrayAll (\arr -> Array.length arr == rowLen) rowsArrays then
         InternalArray2D
             { array = ArrayHelpers.arrayConcat rowsArrays
-            , rows = Array.length rowsArrays
-            , columns = rowLen
+            , numRows = Array.length rowsArrays
+            , numColumns = rowLen
             }
             |> Just
 
@@ -108,20 +108,20 @@ fromColumns columnsArrays =
     in
     if ArrayHelpers.arrayAll (\arr -> Array.length arr == columnLen) columnsArrays then
         let
-            rows : Int
-            rows =
+            numberOfRows : Int
+            numberOfRows =
                 columnLen
 
-            columns : Int
-            columns =
+            numberOfColumns : Int
+            numberOfColumns =
                 Array.length columnsArrays
 
             indicesRowMajor : List ( Int, Int )
             indicesRowMajor =
-                List.range 0 (rows - 1)
+                List.range 0 (numberOfRows - 1)
                     |> List.concatMap
                         (\row ->
-                            List.range 0 (columns - 1)
+                            List.range 0 (numberOfColumns - 1)
                                 |> List.map (\column -> ( row, column ))
                         )
 
@@ -143,8 +143,8 @@ fromColumns columnsArrays =
                 (\array ->
                     InternalArray2D
                         { array = array
-                        , rows = rows
-                        , columns = columns
+                        , numRows = numberOfRows
+                        , numColumns = numberOfColumns
                         }
                         |> Just
                 )
@@ -158,15 +158,15 @@ Orders the elements in [row major order](https://en.wikipedia.org/wiki/Row-_and_
 The array has to be the same length as the product of the provided rows and columns.
 -}
 fromRowMajor : Int -> Int -> Array a -> Maybe (Array2D a)
-fromRowMajor rows columns array =
-    if (rows * columns) /= Array.length array then
+fromRowMajor numRows numColumns array =
+    if (numRows * numColumns) /= Array.length array then
         Nothing
 
     else
         InternalArray2D
             { array = array
-            , rows = rows
-            , columns = columns
+            , numRows = numRows
+            , numColumns = numColumns
             }
             |> Just
 
@@ -175,52 +175,52 @@ fromRowMajor rows columns array =
 Each element is created using the provided function which gives the index (row and column).
 -}
 initialize : Int -> Int -> (Int -> Int -> a) -> Array2D a
-initialize rows columns fn =
+initialize numRows numColumns fn =
     InternalArray2D
         { array =
             Array.initialize
-                (rows * columns)
+                (numRows * numColumns)
                 (\index ->
                     let
                         ( row, column ) =
-                            indexToRowAndColumn rows columns index
+                            indexToRowAndColumn numRows numColumns index
                     in
                     fn row column
                 )
-        , rows = rows
-        , columns = columns
+        , numRows = numRows
+        , numColumns = numColumns
         }
 
 
 {-| Creates a `Array2D` with the provided rows and columns and fills it with the provided element.
 -}
 repeat : Int -> Int -> a -> Array2D a
-repeat rows columns value =
+repeat numRows numColumns value =
     initialize
-        rows
-        columns
+        numRows
+        numColumns
         (\_ _ -> value)
 
 
 {-| Gets the total number of elements the `Array2D` holds.
 -}
-numElements : Array2D a -> Int
-numElements (InternalArray2D { rows, columns }) =
-    rows * columns
+length : Array2D a -> Int
+length (InternalArray2D { numRows, numColumns }) =
+    numRows * numColumns
 
 
 {-| Gets the number of rows the `Array2D` holds.
 -}
-numRows : Array2D a -> Int
-numRows (InternalArray2D array) =
-    array.rows
+rows : Array2D a -> Int
+rows (InternalArray2D array) =
+    array.numRows
 
 
-{-| Gets the number of columns the `SquareArray2D` holds.
+{-| Gets the number of columns the `Array2D` holds.
 -}
-numColumns : Array2D a -> Int
-numColumns (InternalArray2D array) =
-    array.columns
+columns : Array2D a -> Int
+columns (InternalArray2D array) =
+    array.numColumns
 
 
 {-| Gets an element from the `Array2D` at the provided row and column.
@@ -228,7 +228,7 @@ Returns `Nothing` when the index is out of bounds.
 -}
 get : Int -> Int -> Array2D a -> Maybe a
 get row column (InternalArray2D array) =
-    if row >= array.rows || column >= array.columns then
+    if row >= array.numRows || column >= array.numColumns then
         Nothing
 
     else
@@ -270,18 +270,18 @@ update row column updater (InternalArray2D array) =
             InternalArray2D array
 
 
-{-| Applies a function to every element in the `SquareArray2D`.
+{-| Applies a function to every element in the `Array2D`.
 -}
 map : (a -> b) -> Array2D a -> Array2D b
 map fn (InternalArray2D array) =
     InternalArray2D
         { array = Array.map fn array.array
-        , rows = array.rows
-        , columns = array.columns
+        , numRows = array.numRows
+        , numColumns = array.numColumns
         }
 
 
-{-| Applies a function to every element in the `SquareArray2D`.
+{-| Applies a function to every element in the `Array2D`.
 The index (row and column) are provided to the mapping function.
 -}
 indexedMap : (Int -> Int -> a -> b) -> Array2D a -> Array2D b
@@ -291,7 +291,7 @@ indexedMap fn (InternalArray2D array) =
         indexedMapHelper mapFn index elem =
             let
                 ( row, column ) =
-                    indexToRowAndColumn array.rows array.columns index
+                    indexToRowAndColumn array.numRows array.numColumns index
             in
             mapFn row column elem
     in
@@ -300,8 +300,8 @@ indexedMap fn (InternalArray2D array) =
             Array.indexedMap
                 (indexedMapHelper fn)
                 array.array
-        , rows = array.rows
-        , columns = array.columns
+        , numRows = array.numRows
+        , numColumns = array.numColumns
         }
 
 
@@ -314,19 +314,19 @@ toFlatArrayRowMajor (InternalArray2D array) =
 
 indexFromRowAndColumn : Array2D a -> Int -> Int -> Int
 indexFromRowAndColumn (InternalArray2D array) row column =
-    row * array.columns + column
+    row * array.numColumns + column
 
 
-{-| Generates a `SquareArray2D` where each value is randomly generated.
+{-| Generates a `Array2D` where each value is randomly generated.
 -}
 generator : Generator a -> Int -> Int -> Generator (Array2D a)
-generator valueGenerator rows columns =
+generator valueGenerator numRows numColumns =
     Random.map
         (\array ->
             InternalArray2D
                 { array = array
-                , rows = rows
-                , columns = columns
+                , numRows = numRows
+                , numColumns = numColumns
                 }
         )
-        (RandomArray.array (rows * columns) valueGenerator)
+        (RandomArray.array (numRows * numColumns) valueGenerator)
