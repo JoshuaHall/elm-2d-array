@@ -1,24 +1,24 @@
 module SquareArray2D exposing
-    ( fromRows, fromRowMajor, filledWith
+    ( SquareArray2D
+    , fromRows, fromColumns, fromRowMajor, initialize, repeat
     , numRows, numColumns, numElements, get
     , set, update
     , map, indexedMap
     , toFlatArrayRowMajor
     , generator
-    , SquareArray2D
     )
 
-{-| Provides an ergonomic and fast way to use 2 dimensional arrays in Elm.
+{-| Provides an ergonomic and fast way to use square 2 dimensional arrays in Elm.
 
 
 # Square 2D Arrays
 
-@docs Array2D
+@docs SquareArray2D
 
 
 # Creation
 
-@docs fromRows, fromRowMajor, filledWith
+@docs fromRows, fromColumns, fromRowMajor, initialize, repeat
 
 
 # Query
@@ -36,7 +36,7 @@ module SquareArray2D exposing
 @docs map, indexedMap
 
 
-# Lists
+# Arrays
 
 @docs toFlatArrayRowMajor
 
@@ -48,12 +48,13 @@ module SquareArray2D exposing
 -}
 
 import Array exposing (Array)
-import ArrayHelpers
+import ArrayHelpers exposing (indexFromRowAndColumn, squareArrayIndexToRowAndColumn)
+import Maybe.Extra as MaybeExtra
 import Random exposing (Generator)
 import Random.Array as RandomArray
 
 
-{-| Type representing a 2 dimensional square array. Internally is a single Array with a side length.
+{-| Type representing a 2 dimensional square array.
 -}
 type SquareArray2D a
     = InternalSquareArray2D
@@ -62,6 +63,9 @@ type SquareArray2D a
         }
 
 
+{-| Attempts to create a `SquareArray2D` from an `Array` of `Array`s representing rows.
+Returns `Nothing` when the elements don't form a square.
+-}
 fromRows : Array (Array a) -> Maybe (SquareArray2D a)
 fromRows rowsArrays =
     let
@@ -85,6 +89,72 @@ fromRows rowsArrays =
         Nothing
 
 
+{-| Attempts to create a `SquareArray2D` from an `Array` of `Array`s representing columns.
+Returns `Nothing` when the elements don't form a square.
+-}
+fromColumns : Array (Array a) -> Maybe (SquareArray2D a)
+fromColumns columnsArrays =
+    let
+        columnLen : Int
+        columnLen =
+            case Array.get 0 columnsArrays of
+                Just firstColumn ->
+                    Array.length firstColumn
+
+                Nothing ->
+                    0
+    in
+    if Array.length columnsArrays == columnLen && ArrayHelpers.arrayAll (\arr -> Array.length arr == columnLen) columnsArrays then
+        let
+            sideLength : Int
+            sideLength =
+                columnLen
+
+            indicesRowMajor : List ( Int, Int )
+            indicesRowMajor =
+                let
+                    finalIndex : Int
+                    finalIndex =
+                        sideLength - 1
+                in
+                List.range 0 finalIndex
+                    |> List.concatMap
+                        (\row ->
+                            List.range 0 finalIndex
+                                |> List.map (\column -> ( row, column ))
+                        )
+
+            listOfMaybes : List (Maybe a)
+            listOfMaybes =
+                indicesRowMajor
+                    |> List.map
+                        (\( row, column ) ->
+                            columnsArrays
+                                |> Array.get column
+                                |> Maybe.withDefault Array.empty
+                                |> Array.get row
+                        )
+        in
+        listOfMaybes
+            |> MaybeExtra.combine
+            |> Maybe.map Array.fromList
+            |> Maybe.andThen
+                (\array ->
+                    InternalSquareArray2D
+                        { array = array
+                        , sideLength = sideLength
+                        }
+                        |> Just
+                )
+
+    else
+        Nothing
+
+
+{-| Attempts to create a `SquareArray2D` from an `Array` of elements and a side length.
+Orders the elements in [row major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
+The array has to be the same length as the provided side length squared.
+-}
 fromRowMajor : Int -> Array a -> Maybe (SquareArray2D a)
 fromRowMajor sideLength array =
     if (sideLength ^ 2) /= Array.length array then
@@ -98,29 +168,59 @@ fromRowMajor sideLength array =
             |> Just
 
 
-filledWith : a -> Int -> SquareArray2D a
-filledWith value sideLength =
+{-| Creates a `SquareArray2D` with the sideLength.
+Each element is created using the provided function which gives the index (row and column).
+-}
+initialize : Int -> (Int -> Int -> a) -> SquareArray2D a
+initialize sideLength fn =
     InternalSquareArray2D
-        { array = Array.repeat (sideLength ^ 2) value
+        { array =
+            Array.initialize
+                (sideLength ^ 2)
+                (\index ->
+                    let
+                        ( row, column ) =
+                            squareArrayIndexToRowAndColumn sideLength index
+                    in
+                    fn row column
+                )
         , sideLength = sideLength
         }
 
 
+{-| Creates a `SquareArray2D` with a provided side length and fills it with an element.
+-}
+repeat : Int -> a -> SquareArray2D a
+repeat sideLength value =
+    initialize
+        sideLength
+        (\_ _ -> value)
+
+
+{-| Gets the total number of elements the `SquareArray2D` holds.
+-}
 numElements : SquareArray2D a -> Int
 numElements (InternalSquareArray2D { sideLength }) =
     sideLength ^ 2
 
 
+{-| Gets the number of rows the `SquareArray2D` holds.
+-}
 numRows : SquareArray2D a -> Int
 numRows (InternalSquareArray2D array) =
     array.sideLength
 
 
+{-| Gets the number of columns the `SquareArray2D` holds.
+-}
 numColumns : SquareArray2D a -> Int
 numColumns (InternalSquareArray2D array) =
     array.sideLength
 
 
+{-| Gets an element from the `SquareArray2D` at the provided row and column.
+Returns `Nothing` when the index is out of bounds.
+-}
 get : Int -> Int -> SquareArray2D a -> Maybe a
 get row column (InternalSquareArray2D array) =
     if row >= array.sideLength || column >= array.sideLength then
@@ -128,22 +228,28 @@ get row column (InternalSquareArray2D array) =
 
     else
         Array.get
-            (indexFromRowAndColumn (InternalSquareArray2D array) row column)
+            (indexFromRowAndColumn array.sideLength row column)
             array.array
 
 
+{-| Sets an element in the `SquareArray2D` at the provided row and column.
+Returns the `SquareArray2D` unchanged if the index is out of bounds.
+-}
 set : Int -> Int -> a -> SquareArray2D a -> SquareArray2D a
 set row column value (InternalSquareArray2D array) =
     InternalSquareArray2D
         { array
             | array =
                 Array.set
-                    (indexFromRowAndColumn (InternalSquareArray2D array) row column)
+                    (indexFromRowAndColumn array.sideLength row column)
                     value
                     array.array
         }
 
 
+{-| Updates an element in the `SquareArray2D` with a function at the provided row and column.
+Returns the `SquareArray2D` unchanged if the index is out of bounds.
+-}
 update : Int -> Int -> (a -> a) -> SquareArray2D a -> SquareArray2D a
 update row column updater (InternalSquareArray2D array) =
     let
@@ -159,6 +265,8 @@ update row column updater (InternalSquareArray2D array) =
             InternalSquareArray2D array
 
 
+{-| Applies a function to every element in the `SquareArray2D`.
+-}
 map : (a -> b) -> SquareArray2D a -> SquareArray2D b
 map fn (InternalSquareArray2D array) =
     InternalSquareArray2D
@@ -167,8 +275,20 @@ map fn (InternalSquareArray2D array) =
         }
 
 
+{-| Applies a function to every element in the `SquareArray2D`.
+The index (row and column) are provided to the mapping function.
+-}
 indexedMap : (Int -> Int -> a -> b) -> SquareArray2D a -> SquareArray2D b
 indexedMap fn (InternalSquareArray2D array) =
+    let
+        indexedMapHelper : Int -> (Int -> Int -> a -> b) -> Int -> a -> b
+        indexedMapHelper sideLength mapFn index elem =
+            let
+                ( row, column ) =
+                    squareArrayIndexToRowAndColumn sideLength index
+            in
+            mapFn row column elem
+    in
     InternalSquareArray2D
         { array =
             Array.indexedMap
@@ -178,46 +298,22 @@ indexedMap fn (InternalSquareArray2D array) =
         }
 
 
-{-| Internal use only.
+{-| Flattens the `SquareArray2D` in [row major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
 -}
-indexedMapHelper : Int -> (Int -> Int -> a -> b) -> Int -> a -> b
-indexedMapHelper sideLength fn index elem =
-    let
-        ( row, column ) =
-            indexToRowAndColumn sideLength index
-    in
-    fn row column elem
-
-
 toFlatArrayRowMajor : SquareArray2D a -> Array a
 toFlatArrayRowMajor (InternalSquareArray2D array) =
     array.array
 
 
-{-| Generates a grid where each square is randomly filled in.
+{-| Generates a `SquareArray2D` where each value is randomly generated.
 -}
 generator : Generator a -> Int -> Generator (SquareArray2D a)
 generator valueGenerator sideLength =
-    Random.map2
-        (\array sideLength_ ->
+    Random.map
+        (\array ->
             InternalSquareArray2D
                 { array = array
-                , sideLength = sideLength_
+                , sideLength = sideLength
                 }
         )
-        (RandomArray.array sideLength valueGenerator)
-        (Random.constant sideLength)
-
-
-{-| Internal use only.
--}
-indexFromRowAndColumn : SquareArray2D a -> Int -> Int -> Int
-indexFromRowAndColumn (InternalSquareArray2D array) row column =
-    row * array.sideLength + column
-
-
-{-| Internal use only.
--}
-indexToRowAndColumn : Int -> Int -> ( Int, Int )
-indexToRowAndColumn sideLength index =
-    ( index // sideLength, modBy sideLength index )
+        (RandomArray.array (sideLength ^ 2) valueGenerator)

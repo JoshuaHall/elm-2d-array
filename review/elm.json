@@ -11,6 +11,8 @@
             "elm/project-metadata-utils": "1.0.1",
             "jfmengels/elm-review": "2.3.9",
             "jfmengels/elm-review-common": "1.0.2",
+            "jfmengels/elm-review-documentation": "1.0.1",
+            "jfmengels/elm-review-unused": "1.1.4",
             "stil4m/elm-syntax": "7.2.1",
             "truqu/elm-review-nobooleancase": "1.0.0"
         },
@@ -18,6 +20,7 @@
             "elm/html": "1.0.0",
             "elm/parser": "1.1.0",
             "elm/random": "1.0.0",
+            "elm/regex": "1.0.0",
             "elm/time": "1.0.0",
             "elm/virtual-dom": "1.0.2",
             "elm-community/list-extra": "8.2.4",
