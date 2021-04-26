@@ -27,9 +27,9 @@ indexFromRowAndColumn sideLength row column =
     row * sideLength + column
 
 
-indexToRowAndColumn : Int -> Int -> Int -> ( Int, Int )
-indexToRowAndColumn rows columns index =
-    ( index // rows, modBy columns index )
+indexToRowAndColumn : Int -> Int -> ( Int, Int )
+indexToRowAndColumn columns index =
+    ( index // columns, modBy columns index )
 
 
 squareArrayIndexToRowAndColumn : Int -> Int -> ( Int, Int )

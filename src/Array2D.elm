@@ -183,7 +183,7 @@ initialize numRows numColumns fn =
                 (\index ->
                     let
                         ( row, column ) =
-                            indexToRowAndColumn numRows numColumns index
+                            indexToRowAndColumn numColumns index
                     in
                     fn row column
                 )
@@ -291,7 +291,7 @@ indexedMap fn (InternalArray2D array) =
         indexedMapHelper mapFn index elem =
             let
                 ( row, column ) =
-                    indexToRowAndColumn array.numRows array.numColumns index
+                    indexToRowAndColumn array.numColumns index
             in
             mapFn row column elem
     in
