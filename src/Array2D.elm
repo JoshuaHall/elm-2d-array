@@ -48,10 +48,10 @@ module Array2D exposing
 -}
 
 import Array exposing (Array)
-import ArrayHelpers exposing (indexToRowAndColumn)
 import Maybe.Extra as MaybeExtra
 import Random exposing (Generator)
 import Random.Array as RandomArray
+import Utils exposing (indexToRowAndColumn, isPointOutOfBounds)
 
 
 {-| Type representing a 2 dimensional array.
@@ -79,9 +79,9 @@ fromRows rowsArrays =
                 Nothing ->
                     0
     in
-    if ArrayHelpers.arrayAll (\arr -> Array.length arr == rowLen) rowsArrays then
+    if Utils.arrayAll (\arr -> Array.length arr == rowLen) rowsArrays then
         InternalArray2D
-            { array = ArrayHelpers.arrayConcat rowsArrays
+            { array = Utils.arrayConcat rowsArrays
             , numRows = Array.length rowsArrays
             , numColumns = rowLen
             }
@@ -106,7 +106,7 @@ fromColumns columnsArrays =
                 Nothing ->
                     0
     in
-    if ArrayHelpers.arrayAll (\arr -> Array.length arr == columnLen) columnsArrays then
+    if Utils.arrayAll (\arr -> Array.length arr == columnLen) columnsArrays then
         let
             numberOfRows : Int
             numberOfRows =
@@ -228,7 +228,7 @@ Returns `Nothing` when the index is out of bounds.
 -}
 get : Int -> Int -> Array2D a -> Maybe a
 get row column (InternalArray2D array) =
-    if row >= array.numRows || column >= array.numColumns then
+    if isPointOutOfBounds array.numRows array.numColumns row column then
         Nothing
 
     else

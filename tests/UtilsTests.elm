@@ -1,27 +1,28 @@
-module ArrayHelpersTests exposing (arrayHelpersTests)
+module UtilsTests exposing (utilsTests)
 
 import Array exposing (Array)
-import ArrayHelpers
 import Expect
-import Test exposing (Test, describe, test)
+import Fuzz exposing (Fuzzer, intRange)
+import Test exposing (Test, describe, fuzz, fuzz2, test)
+import Utils
 
 
-arrayHelpersTests : Test
-arrayHelpersTests =
+utilsTests : Test
+utilsTests =
     describe "ArrayHelpers"
         [ describe "arrayAll"
             [ test "Passes on good input" <|
                 \_ ->
-                    [ 1, 2, 3, 4, 5 ]
+                    List.range 1 5
                         |> Array.fromList
-                        |> ArrayHelpers.arrayAll (\n -> n > 0)
-                        |> Expect.true "Expected to pass"
+                        |> Utils.arrayAll (\n -> n > 0)
+                        |> Expect.true "All of the numbers should be positive"
             , test "Fails on bad input" <|
                 \_ ->
-                    [ 0, 2, 3, 4, 5 ]
+                    List.range 0 5
                         |> Array.fromList
-                        |> ArrayHelpers.arrayAll (\n -> n > 0)
-                        |> Expect.false "Expected to pass"
+                        |> Utils.arrayAll (\n -> n > 0)
+                        |> Expect.false "Not all of the numbers are positive"
             ]
         , describe "arrayConcat"
             [ test "Concatenates arrays correctly" <|
@@ -29,19 +30,19 @@ arrayHelpersTests =
                     let
                         expectedResult : Array Int
                         expectedResult =
-                            [ 1, 2, 3, 4, 5 ]
+                            List.range 1 5
                                 |> Array.fromList
                     in
                     [ [ 1, 2 ], [], [ 3, 4 ], [ 5 ], [] ]
-                        |> ArrayHelpers.list2dToArray2d
-                        |> ArrayHelpers.arrayConcat
+                        |> Utils.list2dToArray2d
+                        |> Utils.arrayConcat
                         |> Expect.equal expectedResult
             ]
         , describe "indexToRowAndColumn"
             [ test "Should map indices and rows/columns correctly" <|
                 \_ ->
                     List.range 0 8
-                        |> List.map (ArrayHelpers.indexToRowAndColumn 3)
+                        |> List.map (Utils.indexToRowAndColumn 3)
                         |> Expect.equalLists
                             [ ( 0, 0 )
                             , ( 0, 1 )
@@ -56,7 +57,7 @@ arrayHelpersTests =
             , test "Should work with 4 rows and 2 columns" <|
                 \_ ->
                     List.range 0 7
-                        |> List.map (ArrayHelpers.indexToRowAndColumn 2)
+                        |> List.map (Utils.indexToRowAndColumn 2)
                         |> Expect.equalLists
                             [ ( 0, 0 )
                             , ( 0, 1 )
@@ -70,7 +71,7 @@ arrayHelpersTests =
             , test "Should work with 2 rows and 4 columns" <|
                 \_ ->
                     List.range 0 7
-                        |> List.map (ArrayHelpers.indexToRowAndColumn 4)
+                        |> List.map (Utils.indexToRowAndColumn 4)
                         |> Expect.equalLists
                             [ ( 0, 0 )
                             , ( 0, 1 )
@@ -81,12 +82,19 @@ arrayHelpersTests =
                             , ( 1, 2 )
                             , ( 1, 3 )
                             ]
+            , fuzz2 rowsColsFuzzer rowsColsFuzzer "Should work with any number of rows and columns" <|
+                \rows cols ->
+                    List.range 0 (rows * cols - 1)
+                        |> List.map (Utils.indexToRowAndColumn cols)
+                        |> List.reverse
+                        |> List.head
+                        |> Expect.equal (Just ( rows - 1, cols - 1 ))
             ]
         , describe "squareArrayIndexToRowAndColumn"
             [ test "Should map indices and rows/columns correctly" <|
                 \_ ->
                     List.range 0 8
-                        |> List.map (ArrayHelpers.squareArrayIndexToRowAndColumn 3)
+                        |> List.map (Utils.squareArrayIndexToRowAndColumn 3)
                         |> Expect.equalLists
                             [ ( 0, 0 )
                             , ( 0, 1 )
@@ -98,5 +106,22 @@ arrayHelpersTests =
                             , ( 2, 1 )
                             , ( 2, 2 )
                             ]
+            , fuzz rowsColsFuzzer "Last element indices should both always be one less than the side length" <|
+                \sideLength ->
+                    let
+                        oneLessThanSideLength : Int
+                        oneLessThanSideLength =
+                            sideLength - 1
+                    in
+                    List.range 0 ((sideLength ^ 2) - 1)
+                        |> List.map (Utils.squareArrayIndexToRowAndColumn sideLength)
+                        |> List.reverse
+                        |> List.head
+                        |> Expect.equal (Just ( oneLessThanSideLength, oneLessThanSideLength ))
             ]
         ]
+
+
+rowsColsFuzzer : Fuzzer Int
+rowsColsFuzzer =
+    intRange 10 500

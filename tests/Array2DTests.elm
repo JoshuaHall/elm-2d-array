@@ -2,9 +2,10 @@ module Array2DTests exposing (array2dTests)
 
 import Array
 import Array2D exposing (Array2D)
-import ArrayHelpers
 import Expect exposing (Expectation)
-import Test exposing (Test, describe, test)
+import Fuzz exposing (intRange)
+import Test exposing (Test, describe, fuzz2, test)
+import Utils
 
 
 array2dTests : Test
@@ -32,7 +33,7 @@ array2dTests =
                             , [ 3, 7, 11 ]
                             , [ 4, 8, 12 ]
                             ]
-                                |> ArrayHelpers.list2dToArray2d
+                                |> Utils.list2dToArray2d
                                 |> Array2D.fromColumns
                     in
                     maybeFromColumns
@@ -110,6 +111,53 @@ array2dTests =
                                 |> Array2D.get 0 100
                                 |> Expect.equal Nothing
                         )
+            , test "Should return Nothing on an out of bounds index 2" <|
+                \_ ->
+                    expectationOn2dArray
+                        (Array2D.fromRows <|
+                            Array.fromList
+                                [ Array.fromList [ 1, 2 ]
+                                , Array.fromList [ 3, 4 ]
+                                ]
+                        )
+                        (\my2dArray ->
+                            my2dArray
+                                |> Array2D.get 1 -1
+                                |> Expect.equal Nothing
+                        )
+            ]
+        , describe "set"
+            [ fuzz2 (intRange 0 2) (intRange 0 3) "Should correctly set an element" <|
+                \row column ->
+                    expectationOn2dArray
+                        sample2dArray
+                        (\my2dArray ->
+                            my2dArray
+                                |> Array2D.set row column 54100
+                                |> Array2D.get row column
+                                |> Expect.equal (Just 54100)
+                        )
+            , test "Does nothing if the indices are out of bounds" <|
+                \_ ->
+                    expectationOn2dArray
+                        sample2dArray
+                        (\my2dArray ->
+                            my2dArray
+                                |> Array2D.set 2000 2000 54100
+                                |> Expect.equal my2dArray
+                        )
+            ]
+        , describe "map"
+            [ test "Should correctly map elements" <|
+                \_ ->
+                    expectationOn2dArray
+                        sample2dArray
+                        (\my2dArray ->
+                            my2dArray
+                                |> Array2D.map String.fromInt
+                                |> Array2D.get 1 1
+                                |> Expect.equal (Just "6")
+                        )
             ]
         ]
 
@@ -120,7 +168,7 @@ sample2dArray =
     , [ 5, 6, 7, 8 ]
     , [ 9, 10, 11, 12 ]
     ]
-        |> ArrayHelpers.list2dToArray2d
+        |> Utils.list2dToArray2d
         |> Array2D.fromRows
 
 

@@ -1,10 +1,11 @@
 module SquareArray2DTests exposing (squareArray2dTests)
 
 import Array
-import ArrayHelpers
 import Expect exposing (Expectation)
+import Fuzz exposing (intRange)
 import SquareArray2D exposing (SquareArray2D)
-import Test exposing (Test, describe, test)
+import Test exposing (Test, describe, fuzz2, test)
+import Utils
 
 
 squareArray2dTests : Test
@@ -28,7 +29,7 @@ squareArray2dTests =
                     , [ 2, 5, 8 ]
                     , [ 3, 6, 9 ]
                     ]
-                        |> ArrayHelpers.list2dToArray2d
+                        |> Utils.list2dToArray2d
                         |> SquareArray2D.fromColumns
                         |> Expect.equal sampleSquare2dArray
             ]
@@ -100,6 +101,53 @@ squareArray2dTests =
                                 |> SquareArray2D.get 0 100
                                 |> Expect.equal Nothing
                         )
+            , test "Should return Nothing on an out of bounds index 2" <|
+                \_ ->
+                    expectationOnSquare2dArray
+                        (SquareArray2D.fromRows <|
+                            Array.fromList
+                                [ Array.fromList [ 1, 2 ]
+                                , Array.fromList [ 3, 4 ]
+                                ]
+                        )
+                        (\my2dArray ->
+                            my2dArray
+                                |> SquareArray2D.get 1 -1
+                                |> Expect.equal Nothing
+                        )
+            ]
+        , describe "set"
+            [ fuzz2 (intRange 0 2) (intRange 0 2) "Should correctly set an element" <|
+                \row column ->
+                    expectationOnSquare2dArray
+                        sampleSquare2dArray
+                        (\my2dArray ->
+                            my2dArray
+                                |> SquareArray2D.set row column 54100
+                                |> SquareArray2D.get row column
+                                |> Expect.equal (Just 54100)
+                        )
+            , test "Does nothing if the indices are out of bounds" <|
+                \_ ->
+                    expectationOnSquare2dArray
+                        sampleSquare2dArray
+                        (\my2dArray ->
+                            my2dArray
+                                |> SquareArray2D.set 2000 2000 54100
+                                |> Expect.equal my2dArray
+                        )
+            ]
+        , describe "map"
+            [ test "Should correctly map elements" <|
+                \_ ->
+                    expectationOnSquare2dArray
+                        sampleSquare2dArray
+                        (\my2dArray ->
+                            my2dArray
+                                |> SquareArray2D.map String.fromInt
+                                |> SquareArray2D.get 1 1
+                                |> Expect.equal (Just "5")
+                        )
             ]
         ]
 
@@ -110,7 +158,7 @@ sampleSquare2dArray =
     , [ 4, 5, 6 ]
     , [ 7, 8, 9 ]
     ]
-        |> ArrayHelpers.list2dToArray2d
+        |> Utils.list2dToArray2d
         |> SquareArray2D.fromRows
 
 

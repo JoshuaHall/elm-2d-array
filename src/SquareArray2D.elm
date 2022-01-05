@@ -48,10 +48,10 @@ module SquareArray2D exposing
 -}
 
 import Array exposing (Array)
-import ArrayHelpers exposing (indexFromRowAndColumn, squareArrayIndexToRowAndColumn)
 import Maybe.Extra as MaybeExtra
 import Random exposing (Generator)
 import Random.Array as RandomArray
+import Utils exposing (indexFromRowAndColumn, isPointOutOfBounds, squareArrayIndexToRowAndColumn)
 
 
 {-| Type representing a 2 dimensional square array.
@@ -78,9 +78,9 @@ fromRows rowsArrays =
                 Nothing ->
                     0
     in
-    if Array.length rowsArrays == rowLen && ArrayHelpers.arrayAll (\arr -> Array.length arr == rowLen) rowsArrays then
+    if Array.length rowsArrays == rowLen && Utils.arrayAll (\arr -> Array.length arr == rowLen) rowsArrays then
         InternalSquareArray2D
-            { array = ArrayHelpers.arrayConcat rowsArrays
+            { array = Utils.arrayConcat rowsArrays
             , sideLength_ = rowLen
             }
             |> Just
@@ -104,7 +104,7 @@ fromColumns columnsArrays =
                 Nothing ->
                     0
     in
-    if Array.length columnsArrays == columnLen && ArrayHelpers.arrayAll (\arr -> Array.length arr == columnLen) columnsArrays then
+    if Array.length columnsArrays == columnLen && Utils.arrayAll (\arr -> Array.length arr == columnLen) columnsArrays then
         let
             sideLength_ : Int
             sideLength_ =
@@ -216,7 +216,7 @@ Returns `Nothing` when the index is out of bounds.
 -}
 get : Int -> Int -> SquareArray2D a -> Maybe a
 get row column (InternalSquareArray2D array) =
-    if row >= array.sideLength_ || column >= array.sideLength_ then
+    if isPointOutOfBounds array.sideLength_ array.sideLength_ row column then
         Nothing
 
     else

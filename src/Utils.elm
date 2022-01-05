@@ -1,4 +1,4 @@
-module ArrayHelpers exposing (arrayAll, arrayConcat, indexFromRowAndColumn, indexToRowAndColumn, list2dToArray2d, squareArrayIndexToRowAndColumn)
+module Utils exposing (arrayAll, arrayConcat, indexFromRowAndColumn, indexToRowAndColumn, isPointOutOfBounds, list2dToArray2d, squareArrayIndexToRowAndColumn)
 
 import Array exposing (Array)
 
@@ -35,3 +35,8 @@ indexToRowAndColumn columns index =
 squareArrayIndexToRowAndColumn : Int -> Int -> ( Int, Int )
 squareArrayIndexToRowAndColumn sideLength index =
     ( index // sideLength, modBy sideLength index )
+
+
+isPointOutOfBounds : Int -> Int -> Int -> Int -> Bool
+isPointOutOfBounds numRows numCols row column =
+    row < 0 || row >= numRows || column < 0 || column >= numCols
