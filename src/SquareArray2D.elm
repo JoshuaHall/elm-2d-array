@@ -51,7 +51,7 @@ import Array exposing (Array)
 import Maybe.Extra as MaybeExtra
 import Random exposing (Generator)
 import Random.Array as RandomArray
-import Utils exposing (indexFromRowAndColumn, isPointOutOfBounds, squareArrayIndexToRowAndColumn)
+import Utils exposing (firstSubArrayLengthOrZero, indexFromRowAndColumn, isPointOutOfBounds, squareArrayIndexToRowAndColumn)
 
 
 {-| Type representing a 2 dimensional square array.
@@ -71,12 +71,7 @@ fromRows rowsArrays =
     let
         rowLen : Int
         rowLen =
-            case Array.get 0 rowsArrays of
-                Just firstRow ->
-                    Array.length firstRow
-
-                Nothing ->
-                    0
+            firstSubArrayLengthOrZero rowsArrays
     in
     if Array.length rowsArrays == rowLen && Utils.arrayAll (\arr -> Array.length arr == rowLen) rowsArrays then
         InternalSquareArray2D
@@ -97,12 +92,7 @@ fromColumns columnsArrays =
     let
         columnLen : Int
         columnLen =
-            case Array.get 0 columnsArrays of
-                Just firstColumn ->
-                    Array.length firstColumn
-
-                Nothing ->
-                    0
+            firstSubArrayLengthOrZero columnsArrays
     in
     if Array.length columnsArrays == columnLen && Utils.arrayAll (\arr -> Array.length arr == columnLen) columnsArrays then
         let

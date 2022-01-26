@@ -51,7 +51,7 @@ import Array exposing (Array)
 import Maybe.Extra as MaybeExtra
 import Random exposing (Generator)
 import Random.Array as RandomArray
-import Utils exposing (indexToRowAndColumn, isPointOutOfBounds)
+import Utils exposing (firstSubArrayLengthOrZero, indexToRowAndColumn, isPointOutOfBounds)
 
 
 {-| Type representing a 2 dimensional array.
@@ -72,12 +72,7 @@ fromRows rowsArrays =
     let
         rowLen : Int
         rowLen =
-            case Array.get 0 rowsArrays of
-                Just firstRow ->
-                    Array.length firstRow
-
-                Nothing ->
-                    0
+            firstSubArrayLengthOrZero rowsArrays
     in
     if Utils.arrayAll (\arr -> Array.length arr == rowLen) rowsArrays then
         InternalArray2D
@@ -99,12 +94,7 @@ fromColumns columnsArrays =
     let
         columnLen : Int
         columnLen =
-            case Array.get 0 columnsArrays of
-                Just firstColumn ->
-                    Array.length firstColumn
-
-                Nothing ->
-                    0
+            firstSubArrayLengthOrZero columnsArrays
     in
     if Utils.arrayAll (\arr -> Array.length arr == columnLen) columnsArrays then
         let

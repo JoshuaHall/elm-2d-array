@@ -1,4 +1,13 @@
-module Utils exposing (arrayAll, arrayConcat, indexFromRowAndColumn, indexToRowAndColumn, isPointOutOfBounds, list2dToArray2d, squareArrayIndexToRowAndColumn)
+module Utils exposing
+    ( arrayAll
+    , arrayConcat
+    , firstSubArrayLengthOrZero
+    , indexFromRowAndColumn
+    , indexToRowAndColumn
+    , isPointOutOfBounds
+    , list2dToArray2d
+    , squareArrayIndexToRowAndColumn
+    )
 
 import Array exposing (Array)
 
@@ -40,3 +49,10 @@ squareArrayIndexToRowAndColumn sideLength index =
 isPointOutOfBounds : Int -> Int -> Int -> Int -> Bool
 isPointOutOfBounds numRows numCols row column =
     row < 0 || row >= numRows || column < 0 || column >= numCols
+
+
+firstSubArrayLengthOrZero : Array (Array a) -> Int
+firstSubArrayLengthOrZero =
+    Array.get 0
+        >> Maybe.map Array.length
+        >> Maybe.withDefault 0

@@ -119,6 +119,39 @@ utilsTests =
                         |> List.head
                         |> Expect.equal (Just ( oneLessThanSideLength, oneLessThanSideLength ))
             ]
+        , describe "firstSubArrayLengthOrZero"
+            [ test "Should get the correct length for a basic example" <|
+                \_ ->
+                    let
+                        exampleArray : Array (Array Int)
+                        exampleArray =
+                            Array.empty
+                                |> Array.push (List.range 1 10 |> Array.fromList)
+                                |> Array.push Array.empty
+                                |> Array.push (List.singleton 5 |> Array.fromList)
+                    in
+                    exampleArray
+                        |> Utils.firstSubArrayLengthOrZero
+                        |> Expect.equal 10
+            , test "Should get the correct length for a basic example 2" <|
+                \_ ->
+                    let
+                        exampleArray : Array (Array Int)
+                        exampleArray =
+                            Array.empty
+                                |> Array.push (List.singleton 5 |> Array.fromList)
+                                |> Array.push Array.empty
+                                |> Array.push (List.range 1 10 |> Array.fromList)
+                    in
+                    exampleArray
+                        |> Utils.firstSubArrayLengthOrZero
+                        |> Expect.equal 1
+            , test "Should get 0 for an empty array" <|
+                \_ ->
+                    Array.empty
+                        |> Utils.firstSubArrayLengthOrZero
+                        |> Expect.equal 0
+            ]
         ]
 
 
