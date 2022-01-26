@@ -40,3 +40,8 @@ inverted : Array2D Bool -> Array2D Bool
 inverted =
     Array2D.map not
 ```
+
+
+## Benchmarks
+
+Run them for yourself here, source code found here: https://github.com/JoshuaHall/elm-2d-array-benchmarks
